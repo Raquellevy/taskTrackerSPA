@@ -129,6 +129,15 @@ function Header(props) {
   </div>;
 }
 
+function TaskForm(props) {
+  return 
+  <div>
+    
+  </div>
+  ;
+
+}
+
 function TaskPage(props) {
   console.log("rendering a task");
   let task = props.task;

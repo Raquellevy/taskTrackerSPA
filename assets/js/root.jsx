@@ -15,11 +15,10 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     this.state = {
       tasks: props.tasks,
       users: [],
+      register: false,
       session: null,
     };
     this.fetch_tasks();
-    this.fetch_users();
-    this.create_session("raquel@example.com", "pass1");
   }
 
 
@@ -62,6 +61,33 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     });
   }
 
+  create_task() {
+    let newTask = {title:"Title", description:"Description", completed:false, timespent:0, user_id:null}
+    $.ajax("/api/v1/tasks", {
+      method: "post",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: JSON.stringify(newTask),
+      success: (resp) => {
+        let state1 = _.assign({}, this.state, { tasks: resp.data });
+        this.setState(state1);
+      }
+    });
+  }
+
+  create_user(email, pass) {
+    $.ajax("/api/v1/users", {
+      method: "post",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: JSON.stringify({email: email, password_hash: pass}),
+      success: (resp) => {
+        let state1 = _.assign({}, this.state, { tasks: resp.data });
+        this.setState(state1);
+      }
+    });
+  }
+
   fetch_task(id) {
     let task = {};
     _map(this.state.tasks, (tt) => {
@@ -73,66 +99,106 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     return task;
   }
 
+  register() {
+    let state1 = _.assign({}, this.state, { register: true });
+    this.setState(state1);
+  }
+
   render() {
-    return <div>
+    let login = this.state.register ?
+    <div>
+      <h1>Task Tracker</h1>
+      <h2>Create Account</h2>
+      <div className="form">
+        <input type="email" placeholder="email" />
+        <input type="password" placeholder="password" />
+        <button className="btn btn-primary" onClick={() => this.create_user("example@blah.blah", "password")}>Register</button>
+      </div>
+    </div> :
+    <div>
+    <h1>Task Tracker</h1>
+    <div className="form-inline my-2">
+      <input type="email" placeholder="email" />
+      <input type="password" placeholder="password" />
+      <button className="btn btn-secondary" onClick={() => this.create_session("raquel@example.com", "pass1")}>Login</button>
+    </div>
+    <button className="btn btn-primary" onClick={this.register.bind(this)}>No account? Register</button>
+  </div>
+    ;
+
+    let display = this.state.session ? 
+    <div>
       <Router>
         <div>
           <Header root={this} />
-          <button className="btn btn-primary">New Task</button>
           <Route path="/" exact={true} render={() =>
-            <TaskList tasks={this.state.tasks} />
+            <TaskList tasks={this.state.tasks} root={this}/>
           } />
           <Route path="/users" exact={true} render={() =>
              <UserList users={this.state.users} />
           } />
-
         </div>
       </Router>
-    </div>;
+    </div> 
+    : 
+    <Router>
+      {login}
+    </Router>;
+
+    return display;
   }
 }
 
+/*
+    <div className="col-md-2">
+      <p><Link to={"/users"} onClick={props.root.fetch_users.bind(props.root)}>Users</Link></p>
+    </div>*/
 function Header(props) {
   return <div className="row my-2">
-    <div className="col-4">
+    <div className="col-md-10">
       <h1><Link to={"/"}>Task Tracker</Link></h1>
     </div>
-    <div className="col-2">
-      <p><Link to={"/users"} onClick={props.root.fetch_users.bind(props.root)}>Users</Link></p>
-    </div>
-    <div className="col-6">
-      <div className="form-inline my-2">
-        <input type="email" placeholder="email" />
-        <input type="password" placeholder="password" />
-        <button className="btn btn-secondary">Login</button>
-      </div>
+
+    <div className="col-md-2">
+      <button className="btn btn-secondary">Log out</button>
     </div>
   </div>;
 }
 
  function TaskList(props) {
   let tasks = _.map(props.tasks, (t) => <Task key={t.id} task={t} />);
-  return <div className="row">
+  return <div>
+    <div className="row my-2">
+      <div className="col-2">
+        <button className="btn btn-primary" onClick={props.root.create_task.bind(props.root)}>New Task</button>
+      </div>
+    </div>
+
+  <div className="row">
     {tasks}
+  </div>
   </div>;
 }
  function Task(props) {
   let {task} = props;
-  console.log(task)
-  return <div className="card col-4">
-    <div className="card-body">
-      <h2 className="card-title"><Link to={"/tasks/" + task.id}>{task.title}</Link></h2>
-      <p className="card-text">{task.description}</p>
-      <p>Time logged: {task.timespent}min</p>
-      {task.completed ? <p>Complete!</p> : <p>Incomplete</p>}
-    </div>
-  </div>;
+  if (task.edit) {
+    return <div>New Task</div>
+  } else {
+    return <div className="card col-4">
+      <div className="card-body">
+        <h2 className="card-title"><Link to={"/tasks/" + task.id}>{task.title}</Link></h2>
+        <p className="card-text">{task.description}</p>
+        <p>Time logged: {task.timespent}min</p>
+        {task.completed ? <p>Complete!</p> : <p>Incomplete</p>}
+      </div>
+    </div>;
+  }
 }
 
 function TaskForm(props) {
   return 
   <div>
-    
+
   </div>
   ;
 

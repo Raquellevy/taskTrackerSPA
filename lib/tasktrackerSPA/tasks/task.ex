@@ -8,7 +8,8 @@ defmodule TasktrackerSPA.Tasks.Task do
     field :description, :string
     field :timespent, :integer
     field :title, :string
-    belongs_to :user, TasktrackerSPA.Users.User
+
+    #belongs_to :user, TasktrackerSPA.Users.User
 
     timestamps()
   end

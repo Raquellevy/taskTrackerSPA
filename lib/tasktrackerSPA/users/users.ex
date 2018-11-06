@@ -21,6 +21,18 @@ defmodule TasktrackerSPA.Users do
     Repo.all(User)
   end
 
+  def get_user_by_email(email) do
+    Repo.get_by(User, email: email)
+  end
+  
+  def get_and_auth_user(email, password) do
+    user = get_user_by_email(email)
+    case Comeonin.Argon2.check_pass(user, password) do
+      {:ok, user} -> user
+      _else       -> nil
+    end
+  end
+  
   @doc """
   Gets a single user.
 
@@ -101,4 +113,5 @@ defmodule TasktrackerSPA.Users do
   def change_user(%User{} = user) do
     User.changeset(user, %{})
   end
+
 end

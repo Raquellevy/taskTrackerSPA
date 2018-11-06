@@ -14,9 +14,26 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     super(props);
     this.state = {
       tasks: props.tasks,
-      users: []
+      users: [],
+      session: null,
     };
-    //this.fetch_tasks();
+    this.fetch_tasks();
+    this.fetch_users();
+    this.create_session("raquel@example.com", "pass1");
+  }
+
+
+  fetch_users() {
+    $.ajax("/api/v1/users", {
+      method: "get",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: "",
+      success: (resp) => {
+        let state1 = _.assign({}, this.state, { users: resp.data });
+        this.setState(state1);
+      },
+    });
   }
 
   fetch_tasks() {
@@ -32,17 +49,28 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     });
   }
 
-  fetch_users() {
-    $.ajax("/api/v1/users", {
-      method: "get",
+  create_session(email, password) {
+    $.ajax("/api/v1/sessions", {
+      method: "post",
       dataType: "json",
       contentType: "application/json; charset=UTF-8",
-      data: "",
+      data: JSON.stringify({email, password}),
       success: (resp) => {
-        let state1 = _.assign({}, this.state, { users: resp.data });
+        let state1 = _.assign({}, this.state, { session: resp.data });
         this.setState(state1);
-      },
+      }
     });
+  }
+
+  fetch_task(id) {
+    let task = {};
+    _map(this.state.tasks, (tt) => {
+      if (tt.id == id ){
+        task = tt;
+      }
+    })
+
+    return task;
   }
 
   render() {
@@ -50,40 +78,27 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
       <Router>
         <div>
           <Header root={this} />
+          <button className="btn btn-primary">New Task</button>
           <Route path="/" exact={true} render={() =>
             <TaskList tasks={this.state.tasks} />
           } />
           <Route path="/users" exact={true} render={() =>
-            <UserList users={this.state.users} />
+             <UserList users={this.state.users} />
           } />
+
         </div>
       </Router>
     </div>;
   }
 }
 
-
- /*</div>function Header(_props) {
-  return <div className="row my-2">
-    <div className="col-6">
-      <h1>Task Tracker</h1>
-    </div>
-    <div className="col-6">
-      <div className="form-inline my-2">
-        <input type="email" placeholder="email" />
-        <input type="password" placeholder="password" />
-        <button className="btn btn-secondary">Login</button>
-      </div>
-    </div>
-  </div>;*/
-
- function Header(_props) {
+function Header(props) {
   return <div className="row my-2">
     <div className="col-4">
       <h1><Link to={"/"}>Task Tracker</Link></h1>
     </div>
     <div className="col-2">
-      <p><Link to={"/users"} onClick={_props.root.fetch_users.bind(_props.root)}>Users</Link></p>
+      <p><Link to={"/users"} onClick={props.root.fetch_users.bind(props.root)}>Users</Link></p>
     </div>
     <div className="col-6">
       <div className="form-inline my-2">
@@ -92,7 +107,7 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
         <button className="btn btn-secondary">Login</button>
       </div>
     </div>
-    </div>;
+  </div>;
 }
 
  function TaskList(props) {
@@ -103,13 +118,27 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
 }
  function Task(props) {
   let {task} = props;
+  console.log(task)
   return <div className="card col-4">
     <div className="card-body">
-      <h2 className="card-title">{task.title}</h2>
-      <p className="card-text">{task.description} <br/>
-      assigned to: {task.user_id}</p>
+      <h2 className="card-title"><Link to={"/tasks/" + task.id}>{task.title}</Link></h2>
+      <p className="card-text">{task.description}</p>
+      <p>Time logged: {task.timespent}min</p>
+      {task.completed ? <p>Complete!</p> : <p>Incomplete</p>}
     </div>
   </div>;
+}
+
+function TaskPage(props) {
+  console.log("rendering a task");
+  let task = props.task;
+  return (
+    <div>
+      <h1>{task.title}</h1>
+      <p>{task.description}</p>
+    </div>
+
+  );
 }
 
 function UserList(props) {

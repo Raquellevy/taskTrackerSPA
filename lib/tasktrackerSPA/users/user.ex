@@ -6,6 +6,7 @@ defmodule TasktrackerSPA.Users.User do
   schema "users" do
     field :email, :string
     field :password_hash, :string
+    
     has_many :tasks, TasktrackerSPA.Tasks.Task
 
     timestamps()

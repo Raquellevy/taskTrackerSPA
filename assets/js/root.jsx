@@ -17,7 +17,8 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
       users: [],
       register: false,
       session: null,
-      newTask: {title:"", description:"", completed: false, timespent:0, user_id:0}
+      newTask: {title:"", description:"", completed: false, timespent:0, user_id:0},
+      newUser: {email:"", password:""}
     };
     this.fetch_tasks();
     this.fetch_users();
@@ -62,12 +63,12 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     });
   }
 
-  register(email, pass) {
+  register() {
     $.ajax("/api/v1/users", {
       method: "post",
       dataType: "json",
       contentType: "application/json; charset=UTF-8",
-      data: JSON.stringify({email: email, password_hash: pass}),
+      data: JSON.stringify(this.state.newUser),
       success: (resp) => {
         this.create_session(email, pass);
       }
@@ -101,7 +102,7 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     });
   }
 
-  register() {
+  registration_mode() {
     let state1 = _.assign({}, this.state, { register: true });
     this.setState(state1);
   }
@@ -167,15 +168,27 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
   }
 
   render() {
+    let newUserEmail = (ev) => {
+      let user = this.state.newUser;
+      user.email = ev.target.value;
+      let state1 = _.assign({}, this.state, { newUser: user });
+      this.setState(state1);
+    }
+    let newUserPassword = (ev) => {
+      let user = this.state.newUser;
+      user.password = ev.target.value;
+      let state1 = _.assign({}, this.state, { newUser: user });
+      this.setState(state1);
+    }
     let login = this.state.register ?
     // If registration is true, the app is in "registration mode" and we show a registraton form
     <div>
       <h1>Task Tracker</h1>
       <h2>Create Account</h2>
       <div className="form">
-        <input type="email" placeholder="email" />
-        <input type="password" placeholder="password" />
-        <button className="btn btn-info" onClick={() => this.register("example@blah.blah", "password")}>Register</button>
+        <input type="email" placeholder="email" onChange={newUserEmail}/>
+        <input type="password" placeholder="password" onChange={newUserPassword}/>
+        <button className="btn btn-info" onClick={() => this.register()}>Register</button>
       </div>
     </div> 
     :
@@ -187,7 +200,7 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
         <input type="password" placeholder="password" />
         <button className="btn btn-secondary" onClick={() => this.create_session("raquel@example.com", "pass1")}>Login</button>
       </div>
-      <button className="btn btn-info" onClick={this.register.bind(this)}>No account? Register</button>
+      <button className="btn btn-info" onClick={this.registration_mode.bind(this)}>No account? Register</button>
     </div>;
 
     let display = this.state.session ? 

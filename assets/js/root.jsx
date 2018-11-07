@@ -14,11 +14,13 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     super(props);
     this.state = {
       tasks: props.tasks,
+      users: [],
       register: false,
       session: null,
       newTask: {title:"", description:"", completed: false, timespent:0, user_id:0}
     };
     this.fetch_tasks();
+    this.fetch_users();
   }
 
   fetch_tasks() {
@@ -31,6 +33,19 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
         let state1 = _.assign({}, this.state, { tasks: resp.data });
         this.setState(state1);
       },
+    });
+  }
+
+  fetch_users() {
+    $.ajax("/api/v1/users", {
+      method: "get",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: "",
+      success: (resp) => {
+        let state1 = _.assign({}, this.state, { users: resp.data });
+        this.setState(state1);
+      }
     });
   }
 
@@ -126,14 +141,13 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
 
   assign(taskid, userid) {
     let task = this.getTask(taskid);
-    task.user_id = userid;
+    task.user_id = parseInt(userid);
     this.updateTask(taskid, task);
   }
 
   newtask_title(title) {
     let task = this.state.newTask;
     task.title = title;
-    console.log(title);
     let state1 = _.assign({}, this.state, { newTask: task });
     this.setState(state1);
   }
@@ -141,7 +155,6 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
   newtask_description(description) {
     let task = this.state.newTask;
     task.description = description;
-    console.log(description);
     let state1 = _.assign({}, this.state, { newTask: task });
     this.setState(state1);
   }
@@ -149,7 +162,6 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
   newtask_assignment(uid) {
     let task = this.state.newTask;
     task.user_id = uid;
-    console.log(task)
     let state1 = _.assign({}, this.state, { newTask: task });
     this.setState(state1);
   }
@@ -185,7 +197,7 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
         <div>
           <Header root={this} />
           <Route path="/" exact={true} render={() =>
-            <TaskList newTask={this.state.newTask} tasks={this.state.tasks} root={this}/>
+            <TaskList newTask={this.state.newTask} tasks={this.state.tasks} users={this.state.users} root={this}/>
           } />
         </div>
       </Router>
@@ -225,7 +237,12 @@ function Header(props) {
   let newAssign = (ev) => {
     props.root.newtask_assignment(ev.target.value);
   };  
-  let tasks = _.map(props.tasks, (t) => <Task key={t.id} task={t} root={props.root}/>);
+
+  let userOption = (user) => {
+    return <option key={user.id} value={user.id}>{user.email}</option>;
+ };
+
+  let tasks = _.map(props.tasks, (t) => <Task key={t.id} task={t} users={props.users} userOption={userOption} root={props.root}/>);
   // Displays form to create a task and the list of tasks below it
   return (<div>
             <div className="row">
@@ -246,11 +263,7 @@ function Header(props) {
                       <div className="form-group">
                         <label htmlFor="assignto">Assign to</label>
                         <select className="form-control" id="assignto" value={newTask.user_id} onChange={newAssign}>
-                          <option>1</option>
-                          <option>2</option>
-                          <option>3</option>
-                          <option>4</option>
-                          <option>5</option>
+                          {props.users.map(userOption)}
                         </select>
                       </div>
                     </form>
@@ -289,11 +302,7 @@ function Header(props) {
               <div className="form-group">
                 <label htmlFor="assign">Assign to</label>
                 <select className="form-control" id="assign" onChange={assignchanged}>
-                  <option>1</option>
-                  <option>2</option>
-                  <option>3</option>
-                  <option>4</option>
-                  <option>5</option>
+                  {props.users.map(props.userOption)}
                 </select>
               </div>
               <div className="form-check">

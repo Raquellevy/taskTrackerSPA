@@ -20,8 +20,9 @@ import _ from "lodash";
 // Local files can be imported directly using relative paths, for example:
 // import socket from "./socket"
 import root_init from "./root";
+import store from "./store";
 
 $(() => {
   let node = $('#root')[0];
-  root_init(node);
+  root_init(node, store);
 });

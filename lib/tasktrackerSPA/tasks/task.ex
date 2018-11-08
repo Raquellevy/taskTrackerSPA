@@ -8,8 +8,7 @@ defmodule TasktrackerSPA.Tasks.Task do
     field :description, :string
     field :timespent, :integer
     field :title, :string
-
-    #belongs_to :user, TasktrackerSPA.Users.User
+    belongs_to :user, TasktrackerSPA.Users.User
 
     timestamps()
   end
@@ -17,7 +16,7 @@ defmodule TasktrackerSPA.Tasks.Task do
   @doc false
   def changeset(task, attrs) do
     task
-    |> cast(attrs, [:title, :description, :completed, :timespent])
+    |> cast(attrs, [:title, :description, :completed, :timespent, :user_id])
     |> validate_required([:title, :description, :completed, :timespent])
   end
 end

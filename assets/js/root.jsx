@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import $ from 'jquery';
-import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
 
  export default function root_init(node) {
   let tasks = window.tasks;
@@ -16,9 +15,11 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
       tasks: props.tasks,
       users: [],
       register: false,
-      session: null,
-      newTask: {title:"", description:"", completed: false, timespent:0, user_id:0},
-      newUser: {email:"", password:""}
+      sessionToken: null,
+      newTask: {title:"", description:"", completed: false, timespent:0, user_id:1},
+      newUser: {email:"", password_hash:""},
+      login_email: "",
+      login_password: "",
     };
     this.fetch_tasks();
     this.fetch_users();
@@ -36,6 +37,54 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
       },
     });
   }
+  create_task() {
+    $.ajax("/api/v1/tasks", {
+      method: "post",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: JSON.stringify({task: this.state.newTask}),
+      success: (resp) => {
+        console.log(resp.data)
+        let newTask1 = {title:"", description:"", completed: false, timespent:0, user_id:1};
+        let tasks1 = _.concat(this.state.tasks, [resp.data]);
+        let state1 = _.assign({}, this.state, { tasks: tasks1, newTask: newTask1 });
+        this.setState(state1);
+      }
+    });
+  }
+
+  edit_task(id) {
+    let newTask = this.getTask(id);
+    $.ajax("/api/v1/tasks/" + id, {
+      method: "put",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: JSON.stringify({id: id, task: newTask}),
+      success: (resp) => {
+        console.log(resp.data);
+        let tasks = this.state.tasks;
+        _.map(tasks, (tt) => {
+          return tt.id == resp.data.id ? resp.data : tt;
+        })
+        let state1 = _.assign({}, this.state, { tasks: tasks });
+        this.setState(state1);
+      }
+    });
+  }
+  delete_task(id) {
+    $.ajax("/api/v1/tasks/" + id, {
+      method: "delete",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: JSON.stringify({task: this.state.newTask}),
+      success: () => {
+        let tasks1 = _.filter(this.state.tasks, (tt) => tt.id != id);
+        let state1 = _.assign({}, this.state, { tasks: tasks1 });
+        this.setState(state1);
+
+      }
+    });
+  }
 
   fetch_users() {
     $.ajax("/api/v1/users", {
@@ -50,6 +99,19 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     });
   }
 
+  register() {
+    $.ajax("/api/v1/users", {
+      method: "post",
+      dataType: "json",
+      contentType: "application/json; charset=UTF-8",
+      data: JSON.stringify({user: this.state.newUser}),
+      success: (resp) => {
+        let state1 = _.assign({}, this.state, { register: false });
+        this.setState(state1);
+      }
+    });
+  }
+
   create_session(email, password) {
     $.ajax("/api/v1/sessions", {
       method: "post",
@@ -57,53 +119,24 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
       contentType: "application/json; charset=UTF-8",
       data: JSON.stringify({email, password}),
       success: (resp) => {
-        let state1 = _.assign({}, this.state, { session: resp.data });
+        let state1 = _.assign({}, this.state, { sessionToken: resp.data });
         this.setState(state1);
       }
     });
   }
 
-  register() {
-    $.ajax("/api/v1/users", {
-      method: "post",
-      dataType: "json",
-      contentType: "application/json; charset=UTF-8",
-      data: JSON.stringify(this.state.newUser),
-      success: (resp) => {
-        this.create_session(email, pass);
-      }
-    });
-  }
-
-  create_task() {
-    $.ajax("/api/v1/tasks", {
-      method: "post",
-      dataType: "json",
-      contentType: "application/json; charset=UTF-8",
-      data: JSON.stringify(this.state.newTask),
-      success: (resp) => {
-        let state1 = _.assign({}, this.state, { tasks: resp.data });
-        this.setState(state1);
-      }
-    });
-  }
-
-  edit_task(id) {
-    let newTask = this.getTask(id);
-    $.ajax("/api/v1/tasks/" + id, {
-      method: "put",
-      dataType: "json",
-      contentType: "application/json; charset=UTF-8",
-      data: JSON.stringify(newTask),
-      success: (resp) => {
-        let state1 = _.assign({}, this.state, { tasks: resp.data });
-        this.setState(state1);
-      }
-    });
+  endSession() {
+    let state1 = _.assign({}, this.state, { sessionToken: null });
+    this.setState(state1);
   }
 
   registration_mode() {
     let state1 = _.assign({}, this.state, { register: true });
+    this.setState(state1);
+  }
+
+  cancel_registration() {
+    let state1 = _.assign({}, this.state, { register: false });
     this.setState(state1);
   }
 
@@ -176,10 +209,21 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
     }
     let newUserPassword = (ev) => {
       let user = this.state.newUser;
-      user.password = ev.target.value;
+      user.password_hash = ev.target.value;
       let state1 = _.assign({}, this.state, { newUser: user });
       this.setState(state1);
     }
+    let loginEmail = (ev) => {
+      let email = ev.target.value;
+      let state1 = _.assign({}, this.state, { login_email: email });
+      this.setState(state1);
+    }
+    let loginPassword = (ev) => {
+      let password = ev.target.value;
+      let state1 = _.assign({}, this.state, { login_password: password });
+      this.setState(state1);
+    }
+
     let login = this.state.register ?
     // If registration is true, the app is in "registration mode" and we show a registraton form
     <div>
@@ -188,38 +232,33 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
       <div className="form">
         <input type="email" placeholder="email" onChange={newUserEmail}/>
         <input type="password" placeholder="password" onChange={newUserPassword}/>
-        <button className="btn btn-info" onClick={() => this.register()}>Register</button>
+        <button className="btn btn-info" onClick={() => this.register(this.state.newUser.email, this.state.newUser.password)}>Register</button>
       </div>
+      <button className="btn btn-secondary" onClick={() => this.cancel_registration()}>Cancel</button>
     </div> 
     :
     // If registration is false, the app is not in "registration mode" and we show a login form
     <div>
       <h1>Task Tracker</h1>
       <div className="form-inline my-2">
-        <input type="email" placeholder="email" />
-        <input type="password" placeholder="password" />
-        <button className="btn btn-secondary" onClick={() => this.create_session("raquel@example.com", "pass1")}>Login</button>
+        <input type="email" placeholder="email" onChange={loginEmail}/>
+        <input type="password" placeholder="password" onChange={loginPassword}/>
+        <button className="btn btn-secondary" onClick={() => this.create_session(this.state.login_email, this.state.login_password)}>Login</button>
       </div>
       <button className="btn btn-info" onClick={this.registration_mode.bind(this)}>No account? Register</button>
     </div>;
 
-    let display = this.state.session ? 
+    let display = this.state.sessionToken ? 
     // if the session is not null, it means a user is currently logged in, so we display the tasks
     <div>
-      <Router>
-        <div>
-          <Header root={this} />
-          <Route path="/" exact={true} render={() =>
-            <TaskList newTask={this.state.newTask} tasks={this.state.tasks} users={this.state.users} root={this}/>
-          } />
-        </div>
-      </Router>
-    </div> 
+      <Header root={this} />
+      <TaskList newTask={this.state.newTask} tasks={this.state.tasks} session={this.state.sessionToken} users={this.state.users} root={this}/>
+    </div>
     : 
     // if the session is null it means the user is not logged in so we show the login page
-    <Router>
+    <div>
       {login}
-    </Router>;
+    </div>;
 
     return display;
   }
@@ -227,13 +266,14 @@ import { Link, BrowserRouter as Router, Route } from 'react-router-dom';
 
 // Header nav for when a user is logged in, has main link to Task Tracker and log out button
 function Header(props) {
+  let root = props.root;
   return <div className="row my-2">
     <div className="col-md-10">
       <h1>Task Tracker</h1>
     </div>
 
     <div className="col-md-2">
-      <button className="btn btn-secondary">Log out</button>
+      <button className="btn btn-secondary" onClick={() => root.endSession()}>Log out</button>
     </div>
   </div>;
 }
@@ -241,6 +281,7 @@ function Header(props) {
 // Component to render a lists of tasks
  function TaskList(props) {
   let newTask = props.newTask;
+  let session = props.session;
   let newTitle = (ev) => {
     props.root.newtask_title(ev.target.value);
   };
@@ -248,14 +289,14 @@ function Header(props) {
     props.root.newtask_description(ev.target.value);
   };
   let newAssign = (ev) => {
-    props.root.newtask_assignment(ev.target.value);
+    props.root.newtask_assignment(parseInt(ev.target.value));
   };  
 
   let userOption = (user) => {
-    return <option key={user.id} value={user.id}>{user.email}</option>;
+    return user.id == session.user_id ? <option key={user.id} value={user.id} defaultValue>{user.email}</option> : <option key={user.id} value={user.id}>{user.email}</option>;
  };
 
-  let tasks = _.map(props.tasks, (t) => <Task key={t.id} task={t} users={props.users} userOption={userOption} root={props.root}/>);
+  let tasks = _.map(props.tasks, (t) => <Task key={t.id} task={t} users={props.users} session={props.session} userOption={userOption} root={props.root}/>);
   // Displays form to create a task and the list of tasks below it
   return (<div>
             <div className="row">
@@ -293,7 +334,7 @@ function Header(props) {
 
 // Component to render a single task, with a title, description, timespent, complete flag and user assigned to
  function Task(props) {
-  let {root, task} = props;
+  let {root, session, task} = props;
   let timechanged = (ev) => {
     root.logTime(task.id, ev.target.value);
   };
@@ -303,27 +344,37 @@ function Header(props) {
   let assignchanged = (ev) => {
     root.assign(task.id, ev.target.value);
   };  
-  return <div className="card text-white bg-secondary mb-3 col-12">
-          <h2 className="card-header">{task.title}</h2>
-          <div className="card-body">
-            <p className="card-text">{task.description}</p>
-            <form>
-              <div className="form-group">
-                <label htmlFor="logtime">Timespent</label>
-                <input type="number" className="form-control" id="logtime" step={15} value={task.timespent} onChange={timechanged}/>
+
+  let minutesSpent = session.user_id == task.user_id ?
+  <div className="form-group">
+    <label htmlFor="logtime">Minutes spent</label>
+    <input type="number" className="form-control" id="logtime" step={15} value={task.timespent} onChange={timechanged}/>
+  </div>
+  : null;
+
+  return <div className="col-md-12">
+            <div className="card border-warning mb-3">
+              <h2 className="card-header bg-warning">{task.title}</h2>
+              <div className="card-body">
+                <p className="card-text">{task.description}</p>
+                <form>
+                  {minutesSpent}
+                  <div className="form-group">
+                    <label htmlFor="assign">Assign to</label>
+                    <select className="form-control" id="assign" defaultValue={task.user_id} onChange={assignchanged}>
+                      {props.users.map(props.userOption)}
+                    </select>
+                  </div>
+                  <div className="form-check">
+                    <input type="checkbox" className="form-check-input" checked={task.completed} id="completed" onChange={completechanged}/>
+                    <label className="form-check-label" htmlFor="completed">Complete</label>
+                  </div>
+                </form>
+                <div className="text-right">
+                  <button className="btn btn-info" onClick={() => root.edit_task(task.id)}>Save</button>
+                  <button className="btn btn-warning" onClick={() => root.delete_task(task.id)}>Delete</button>
+                </div>
               </div>
-              <div className="form-group">
-                <label htmlFor="assign">Assign to</label>
-                <select className="form-control" id="assign" onChange={assignchanged}>
-                  {props.users.map(props.userOption)}
-                </select>
-              </div>
-              <div className="form-check">
-                <input type="checkbox" className="form-check-input" checked={task.completed} id="completed" onChange={completechanged}/>
-                <label className="form-check-label" htmlFor="completed">Complete</label>
-              </div>
-            </form>
-            <button className="btn btn-info" onClick={() => root.edit_task(task.id)}>Save</button>
           </div>
-       </div>;
+        </div>;
 }

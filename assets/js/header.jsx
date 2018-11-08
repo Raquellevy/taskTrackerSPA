@@ -5,7 +5,6 @@ import _ from 'lodash';
 import api from './api';
 
 function Header(props) {
-    let root = props.root;
     return <div className="row my-2">
             <div className="col-md-10">
               <h1>Task Tracker</h1>
@@ -13,7 +12,7 @@ function Header(props) {
   
             <div className="col-md-2">
               <button className="btn btn-secondary" 
-                      onClick={() => root.endSession()}>
+                      onClick={api.endSession}>
                       Log out
               </button>
             </div>

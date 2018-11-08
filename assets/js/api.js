@@ -21,7 +21,8 @@ class TheServer {
         });
     }
 
-    send_put(path, data, callback) {
+    send_put(path, data, token, callback) {
+        data.token = token
         $.ajax(path, {
           method: "put",
           dataType: "json",
@@ -31,12 +32,12 @@ class TheServer {
         });
     } 
     
-    delete(path, callback) {
+    delete(path, token, callback) {
         $.ajax(path, {
             method: "delete",
             dataType: "json",
             contentType: "application/json; charset=UTF-8",
-            data: "",
+            data: JSON.stringify({token: token}),
             success: callback,
           });
     }
@@ -53,25 +54,26 @@ class TheServer {
         )
     }
 
-    create_task() {
+    create_task(newTask, token) {
         this.send_post(
             "/api/v1/tasks",
-            {task: this.state.newTask},
+            {task: newTask, token: token},
             (resp) => {this.fetch_tasks()});
     }
     
-    edit_task(id) {
+    edit_task(id, newTask, token) {
         this.send_put(
             "/api/v1/tasks/" + id,
             {id: id, task: newTask},
+            token,
             (resp) => {this.fetch_tasks()}
         );
     }
 
-    delete_task(id) {
+    delete_task(id, token) {
         this.delete(
             "/api/v1/tasks/" + id,
-            {task: this.state.newTask},
+            token,
             () => {this.fetch_tasks()}
         );
     }
@@ -88,11 +90,16 @@ class TheServer {
         );
     }
     
-    register() {
+    register(newUser) {
         this.send_post(
             "/api/v1/users",
-            {user: this.state.newUser},
-            (resp) => {this.fetch_users()}
+            {user: newUser},
+            (resp) => {
+                store.dispatch({
+                    type: 'REGISTRATION_MODE',
+                    data: false
+                });
+            }
         );
     }
     
@@ -109,6 +116,31 @@ class TheServer {
         );
     }
 
+    endSession() {
+        let action = {
+          type: "END_SESSION",
+          data: null
+        }
+        store.dispatch(action);
+    }
+    
+    registration_mode() {
+        let action = {
+          type: 'REGISTRATION_MODE',
+          data: true
+        }
+        store.dispatch(action);
+    }
+    
+    cancel_registration() {
+        let action = {
+          type: 'REGISTRATION_MODE',
+          data: false
+        }
+        store.dispatch(action);
+    }
+
+   
 }
 
 export default new TheServer();

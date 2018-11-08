@@ -61,7 +61,7 @@ defmodule TasktrackerSPA.Users do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_user(%{"email" => email, "password_hash" => password}) do
+  def create_user(%{"email" => email, "password" => password}) do
     pass = Argon2.hash_pwd_salt(password);
     %User{}
     |> User.changeset(%{"email" => email, "password_hash" => pass})

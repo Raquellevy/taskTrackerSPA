@@ -1,27 +1,29 @@
 import store from './store';
 
 class TheServer {
-    fetch_path(path, callback) {
+    fetch_path(path, callback, failcallback) {
         $.ajax(path, {
             method: "get",
             dataType: "json",
             contentType: "application/json; charset=UTF-8",
             data: "",
             success: callback,
+            error: failcallback,
         });
     }
 
-    send_post(path, data, callback) {
+    send_post(path, data, callback, failcallback) {
         $.ajax(path, {
           method: "post",
           dataType: "json",
           contentType: "application/json; charset=UTF-8",
           data: JSON.stringify(data),
           success: callback,
+          error: failcallback,
         });
     }
 
-    send_put(path, data, token, callback) {
+    send_put(path, data, token, callback, failcallback) {
         data.token = token
         $.ajax(path, {
           method: "put",
@@ -29,16 +31,18 @@ class TheServer {
           contentType: "application/json; charset=UTF-8",
           data: JSON.stringify(data),
           success: callback,
+          error: failcallback,
         });
     } 
     
-    delete(path, token, callback) {
+    delete(path, token, callback, failcallback) {
         $.ajax(path, {
             method: "delete",
             dataType: "json",
             contentType: "application/json; charset=UTF-8",
             data: JSON.stringify({token: token}),
             success: callback,
+            error: failcallback,
           });
     }
 
@@ -50,7 +54,8 @@ class TheServer {
                     type: 'TASK_LIST',
                     data: resp.data,
                 });
-            }
+            },
+            (er) => {alert("invalid")},
         )
     }
 
@@ -58,7 +63,8 @@ class TheServer {
         this.send_post(
             "/api/v1/tasks",
             {task: newTask, token: token},
-            (resp) => {this.fetch_tasks()});
+            (resp) => {this.fetch_tasks()},
+            (er) => {alert("Fill in all fields to create a task")});
     }
     
     edit_task(id, newTask, token) {
@@ -66,7 +72,8 @@ class TheServer {
             "/api/v1/tasks/" + id,
             {id: id, task: newTask},
             token,
-            (resp) => {this.fetch_tasks()}
+            (resp) => {this.fetch_tasks()},
+            (er) => {alert("invalid")},
         );
     }
 
@@ -74,7 +81,8 @@ class TheServer {
         this.delete(
             "/api/v1/tasks/" + id,
             token,
-            () => {this.fetch_tasks()}
+            () => {this.fetch_tasks()},
+            (er) => {alert("invalid")},
         );
     }
     
@@ -99,7 +107,8 @@ class TheServer {
                     type: 'REGISTRATION_MODE',
                     data: false
                 });
-            }
+            },
+            (er) => {alert("Invalid email address")},
         );
     }
     
@@ -112,7 +121,10 @@ class TheServer {
                     type: 'NEW_SESSION',
                     data: resp.data,
                 });
-            }
+            },
+            (er) => {
+                console.log("Request failed");
+                alert("Invalid email/password")},
         );
     }
 

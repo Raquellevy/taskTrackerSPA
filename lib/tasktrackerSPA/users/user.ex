@@ -18,5 +18,6 @@ defmodule TasktrackerSPA.Users.User do
     |> cast(attrs, [:email, :password_hash])
     |> unique_constraint(:email)
     |> validate_required([:email, :password_hash])
+    |> validate_format(:email, ~r/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/)
   end
 end

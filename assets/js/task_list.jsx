@@ -71,15 +71,15 @@ class TaskList extends React.Component {
                             <div className="card-body">
                                 <form>
                                     <div className="form-group">
-                                        <label htmlFor="title">Title</label>
+                                        <label htmlFor="title">Title*</label>
                                         <input type="text" className="form-control" id="title" value={this.state.newTask.title} onChange={newTitle}/>
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="desc">Description</label>
+                                        <label htmlFor="desc">Description*</label>
                                         <textarea className="form-control" id="desc" value={this.state.newTask.description} onChange={newDesc}/>
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="assignto">Assign to</label>
+                                        <label htmlFor="assignto">Assign to*</label>
                                         <select className="form-control" id="assignto" value={this.state.newTask.user_id} onChange={newAssign}>{users.map(userOption)}</select>
                                     </div>
                                 </form>
